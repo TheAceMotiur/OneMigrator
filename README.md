@@ -12,15 +12,16 @@ composer require onemigrator/onemigrator
 
 ### Creating a Migration
 
-Create a migration file in the `migrations` directory:
+Create a migration file in your migrations directory. You can use either PHP or SQL files:
 
+#### PHP Migration
 ```php
-// migrations/2023_01_01_create_users.php
+// migrations/001_create_users.php
 use OneMigrator\Migration;
 
 return new Migration(
-    '2023_01_01_create_users',
-    'Create users table',
+    '001',                    // Version must be 3 digits
+    'Create users table',     // Description
     "CREATE TABLE users (
         id INT AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(255),
@@ -28,6 +29,17 @@ return new Migration(
     )"
 );
 ```
+
+#### SQL Migration
+```sql
+-- Description: Create users table
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255),
+    email VARCHAR(255) UNIQUE
+);
+```
+Save SQL files with version prefix: `001_create_users.sql`
 
 ### Running Migrations
 
@@ -40,25 +52,21 @@ $manager = new MigrationManager($pdo, __DIR__ . '/migrations');
 // Run migrations
 $applied = $manager->migrate();
 
-// Verify checksums
+// Verify migration integrity
 $invalid = $manager->verifyChecksums();
 ```
 
 ## Features
 
-- Checksum verification for migration integrity
-- Transaction support
-- Version tracking
-- Simple API
+- Supports both PHP and SQL migration files
+- Automatic checksum verification for migration integrity
+- Transaction support for safe migration updates
+- Version-based migration tracking
+- Migrations table auto-creation
 - PSR-4 autoloading
 - PDO database support
 
-## Suggested Improvements
+## Requirements
 
-1. Add rollback support
-2. Implement dry-run mode
-3. Add migration dependencies
-4. Add migration status command
-5. Add logging support
-6. Add different database driver support
-7. Add migration generation commands
+- PHP 7.4 or higher
+- PDO extension
