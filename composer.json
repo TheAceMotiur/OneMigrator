@@ -1,0 +1,18 @@
+{
+    "name": "onemigrator/onemigrator",
+    "description": "Database migration system with checksum support",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "OneMigrator\\": "src/"
+        }
+    },
+    "require": {
+        "php": ">=7.4",
+        "ext-pdo": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.0"
+    }
+}
