@@ -39,34 +39,14 @@ CREATE TABLE users (
     email VARCHAR(255) UNIQUE
 );
 ```
-Save SQL files with version prefix: `001_create_users.sql`
 
-### Running Migrations
+Save SQL files with version prefix like `001_create_users.sql`. The version number (001) will be automatically extracted from the filename. The description will be parsed from the SQL comment starting with `-- Description:`.
 
-```php
-use OneMigrator\MigrationManager;
+The [`Migration`](src/Migration.php) class will automatically calculate a SHA-256 checksum of your SQL to ensure integrity.
 
-$pdo = new PDO('mysql:host=localhost;dbname=myapp', 'user', 'password');
-$manager = new MigrationManager($pdo, __DIR__ . '/migrations');
-
-// Run migrations
-$applied = $manager->migrate();
-
-// Verify migration integrity
-$invalid = $manager->verifyChecksums();
-```
-
-## Features
-
-- Supports both PHP and SQL migration files
-- Automatic checksum verification for migration integrity
-- Transaction support for safe migration updates
-- Version-based migration tracking
-- Migrations table auto-creation
-- PSR-4 autoloading
-- PDO database support
-
-## Requirements
-
-- PHP 7.4 or higher
-- PDO extension
+When using the [`MigrationManager`](src/MigrationManager.php), it will:
+- Create a migrations table if it doesn't exist
+- Execute new migrations in order by version number
+- Track executed migrations with their checksums
+- Handle updates to existing migrations safely with automatic backup/rollback
+- Support both .php and .sql migration files

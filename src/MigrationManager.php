@@ -119,17 +119,46 @@ class MigrationManager
         $this->pdo->beginTransaction();
         
         try {
-            // Execute the new migration SQL
+            // Store the original table state
+            $backupTable = $this->table . '_backup_' . $migration->getVersion();
+            $this->pdo->exec("CREATE TABLE {$backupTable} LIKE {$this->table}");
+            $this->pdo->exec("INSERT INTO {$backupTable} SELECT * FROM {$this->table}");
+            
+            // Execute the modified migration SQL
             $this->pdo->exec($migration->getSql());
             
-            // Update the checksum
-            $stmt = $this->pdo->prepare("UPDATE {$this->table} SET checksum = ? WHERE version = ?");
-            $stmt->execute([$migration->getChecksum(), $migration->getVersion()]);
+            // Update the checksum in migrations table
+            $stmt = $this->pdo->prepare("UPDATE {$this->table} SET 
+                checksum = ?, 
+                executed_at = CURRENT_TIMESTAMP 
+                WHERE version = ?");
+            $stmt->execute([
+                $migration->getChecksum(), 
+                $migration->getVersion()
+            ]);
             
+            // If successful, drop backup
+            $this->pdo->exec("DROP TABLE IF EXISTS {$backupTable}");
             $this->pdo->commit();
+            
         } catch (\Exception $e) {
             $this->pdo->rollBack();
-            throw $e;
+            // Restore from backup if exists
+            if ($this->tableExists($backupTable)) {
+                $this->pdo->exec("DROP TABLE IF EXISTS {$this->table}");
+                $this->pdo->exec("RENAME TABLE {$backupTable} TO {$this->table}");
+            }
+            throw new \RuntimeException("Failed to update migration {$migration->getVersion()}: " . $e->getMessage());
+        }
+    }
+
+    private function tableExists(string $tableName): bool
+    {
+        try {
+            $result = $this->pdo->query("SELECT 1 FROM {$tableName} LIMIT 1");
+            return $result !== false;
+        } catch (\Exception $e) {
+            return false;
         }
     }
 
